@@ -37,3 +37,40 @@ def select_valid_rows(csv_path:str):
 
     return survey
 
+def drop_meta_data(df:pd.DataFrame):
+    """Select columns containing survey responses
+
+    Args:
+        df (pd.DataFrame): df containing qualtrics data with original column names
+
+    Returns:
+        [pd.DataFrame]: df only containing survey response columns, no meta-data
+
+    Survey response column names begin with Q 
+    """
+    filter_col = [col for col in df if col.startswith('Q')]
+    df = df[filter_col]
+
+    return df
+
+
+def search_column_labels(column_labels:dict, search_term: str, print: bool=False):
+    """searches label dictionary for word(s)
+
+    Args:
+        column_labels (dict): dictionary with keys containing col names and values containing survey questions
+        search_term (str): word to search values for
+
+    Function is designed to take dict resulting from extract_column_labels() as argument
+
+    Returns:
+        list: List of column names containing search term
+    """
+    cols = []
+    for key, value in column_labels.items():
+        if search_term in value:
+            if print:
+                print(key, value)
+            cols.append(key)
+    
+    return cols
