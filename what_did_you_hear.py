@@ -23,7 +23,7 @@ survey3 = qualtrics.select_valid_rows(survey3_path)
 survey3 = qualtrics.drop_meta_data(survey3)
 
 cols = qualtrics.search_column_labels(survey3_labels, 
-'What did you hear students say in the discussion?')
+'What did you hear students say in the discussion?', print_col=True)
 
 # create average word count for Q83 vs Q20
 

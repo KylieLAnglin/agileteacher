@@ -54,7 +54,7 @@ def drop_meta_data(df:pd.DataFrame):
     return df
 
 
-def search_column_labels(column_labels:dict, search_term: str, print: bool=False):
+def search_column_labels(column_labels:dict, search_term: str, print_col: bool=False):
     """searches label dictionary for word(s)
 
     Args:
@@ -69,7 +69,7 @@ def search_column_labels(column_labels:dict, search_term: str, print: bool=False
     cols = []
     for key, value in column_labels.items():
         if search_term in value:
-            if print:
+            if print_col:
                 print(key, value)
             cols.append(key)
     
