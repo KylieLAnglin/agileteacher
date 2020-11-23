@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 
 def extract_column_labels(csv_path: str):
@@ -23,7 +24,9 @@ def extract_column_labels(csv_path: str):
     return survey_labels
 
 
-def select_valid_rows(csv_path:str):
+def select_valid_rows(survey: pd.DataFrame,
+                      keep_previews: bool = False,
+                      min_duration: int = 45):
     """import qualtrics csv and select rows with survey responses
 
     Args:
@@ -32,12 +35,15 @@ def select_valid_rows(csv_path:str):
     Returns:
         [pd.DataFrame]: dataframe containing only survey responses
     """
-    survey = pd.read_csv(csv_path)
     survey = survey[2:]
+
+    if not keep_previews:
+        survey = drop_previews(survey, min_duration=min_duration)
 
     return survey
 
-def drop_meta_data(df:pd.DataFrame):
+
+def drop_meta_data(df: pd.DataFrame):
     """Select columns containing survey responses
 
     Args:
@@ -54,7 +60,7 @@ def drop_meta_data(df:pd.DataFrame):
     return df
 
 
-def search_column_labels(column_labels:dict, search_term: str, print_col: bool=False):
+def search_column_labels(column_labels: dict, search_term: str, print_col: bool = False):
     """searches label dictionary for word(s)
 
     Args:
@@ -72,5 +78,53 @@ def search_column_labels(column_labels:dict, search_term: str, print_col: bool=F
             if print_col:
                 print(key, value)
             cols.append(key)
-    
+
     return cols
+
+
+def replace_missing_text(df: pd.DataFrame,
+                         columns: list,
+                         replace_str: str = ''):
+    """replace nans in df text column
+
+    Args:
+        df (pd.DataFrame): dataframe containing text column
+        columns (list): list of text columns with nans
+        replace_str (str): replacement string
+    """
+    for col in columns:
+        df[col] = df[col].replace(np.nan, replace_str, regex=True)
+
+    return df
+
+
+def drop_previews(df: pd.DataFrame, min_duration: int = 0):
+    """drop survey entries where participant was likely just previewing
+
+    Args:
+        df (pd.DataFrame): cleaned qualtrics df
+        min_duration (int, optional): Drop if duration less than provided seconds. Defaults to 45.
+
+    Returns:
+        df: df with only meaningful survey responses
+    """
+    df = df.loc[df.DistributionChannel != 'preview']
+    df = df.loc[df.Status != 'Survey Preview']
+
+    df = df.loc[pd.to_numeric(df['Duration (in seconds)']) > min_duration]
+
+    return df
+
+
+def drop_test_responses(df: pd.DataFrame, columns: list, values: list):
+    """Drop rows where values indicate survey response was a test
+
+    Args:
+        columns (list): list of columns to check for values to drop
+        values (list): values indicating survey was a test
+        df: qualtrics df
+
+    Returns:
+        [type]: [description]
+    """
+

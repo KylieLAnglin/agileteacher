@@ -1,6 +1,6 @@
 
 
-def doc_len_list(doc_list:list, ignore_empty:bool=True):
+def doc_len_list(doc_list:list, ignore_less_than:int=0):
     """list of number of tokens in spacy docs
 
     Args:
@@ -11,7 +11,7 @@ def doc_len_list(doc_list:list, ignore_empty:bool=True):
         float: average number of tokens in spacy docs
     """
     lens = []
-    [lens.append(len(doc)) for doc in doc_list if (len(doc) > 0 or ignore_empty==False)]
+    [lens.append(len(doc)) if len(doc) >= ignore_less_than else lens.append(None) for doc in doc_list ]
 
     return lens
 
