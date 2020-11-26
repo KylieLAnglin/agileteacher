@@ -1,7 +1,79 @@
-import sklearn.feature_extraction
-import nltk
-import string
+# %%
+import collections
+import os
+
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+import spacy
+
+nlp = spacy.load("en", disable=["parser", "ner"])
+
+
+# %%
+def vectorize_text(
+    df: pd.DataFrame,
+    text_col: str,
+    remove_stopwords: bool = False,
+    tfidf: bool = False,
+    lemma: bool = False,
+    lsa: bool = False
+):
+    docs = list(df[text_col])
+    if remove_stopwords == False:
+        stop_words = []
+
+    elif remove_stopwords:
+        stop_words = list(stopwords.words("english"))
+
+    if lemma:
+        docs = [" ".join([token.lemma_ for token in nlp(text)]) for text in df[text_col]]
+        
+    if tfidf == False:
+        vec = CountVectorizer(stop_words=stop_words)
+
+    elif tfidf:
+        vec = TfidfVectorizer(stop_words=stop_words)
+
+    X = vec.fit_transform(docs)
+    matrix = pd.DataFrame(X.toarray(), columns=vec.get_feature_names(), index=df.index)
+
+    print("Number of words: ", len(matrix.columns))
+
+    if lsa:
+        lsa_dfs = create_lsa_dfs(matrix=matrix)
+        matrix = lsa_dfs.matrix
+        print("Number of dimensions: ", len(matrix.columns))
+
+    return matrix
+
+
+def create_lsa_dfs(matrix: pd.DataFrame, n_components: int=100, random_state: int=100):
+
+    lsa = TruncatedSVD(n_components=n_components, random_state=random_state)
+    lsa_fit = lsa.fit_transform(matrix)
+    lsa_fit = Normalizer(copy=False).fit_transform(lsa_fit)
+    print(lsa_fit.shape)
+
+    #  Each LSA component is a linear combo of words
+    word_weights = pd.DataFrame(lsa.components_, columns=matrix.columns)
+    word_weights.head()
+    word_weights_trans = word_weights.T
+
+    # Each document is a linear combination of components
+    matrix_lsa = pd.DataFrame(lsa_fit, index=matrix.index, columns=word_weights.index)
+    matrix_lsa.sample(5)
+
+    word_weights = word_weights_trans.sort_values(by=[0], ascending=False)
+
+    LSA_tuple = collections.namedtuple("LSA_tuple", ["matrix", "word_weights"])
+    new = LSA_tuple(matrix_lsa, word_weights)
+
+    return new
 
 
 def doc_len_list(doc_list: list, ignore_less_than: int = 0):
@@ -21,94 +93,3 @@ def doc_len_list(doc_list: list, ignore_less_than: int = 0):
     ]
 
     return lens
-
-
-# Preprocessing function
-def preprocessing(
-    data: pd.DataFrame,
-    text_col: int = -1,
-    remove_stopwords: bool = False,
-    filler_words: list = [],
-    stem: bool = False,
-    tfidf: bool = False,
-    lsa: bool = False,
-):
-    df = data.copy()
-
-    text = data.iloc[:, text_col]
-
-    if remove_stopwords:
-        # define stopwords
-        filler_words = set(nltk.corpus.stopwords.words("english")).union(
-            set(string.punctuation), set(filler_words)
-        )
-        if stem:  # stopwords must be removed before stemming
-            # tokenize text
-            text = text.apply(lambda x: nltk.tokenize.casual.casual_tokenize(x))
-            # remove stopwords and stem
-            text = text.apply(
-                lambda x: [
-                    nltk.stem.SnowballStemmer("english").stem(item)
-                    for item in x
-                    if item not in filler_words
-                ]
-            )
-            # combine
-            text = text.apply(lambda x: " ".join([item for item in x]))
-            # set filler_words to None so stop words don't get removied twice
-            filler_words = None
-
-    if not remove_stopwords:
-        filler_words = None
-
-    if stem and not remove_stopwords:
-        # tokenize text
-        text = text.apply(lambda x: nltk.tokenize.casual.casual_tokenize(x))
-        # stem
-        text = text.apply(
-            lambda x: [nltk.stem.SnowballStemmer("english").stem(item) for item in x]
-        )
-        # combine
-        text = text.apply(lambda x: " ".join([item for item in x]))
-
-    if tfidf and not lsa:
-        vectors = sklearn.feature_extraction.text.TfidfVectorizer(
-            lowercase=True, stop_words=filler_words
-        ).fit_transform(text.tolist())
-
-        dense = vectors.todense()
-        denselist = dense.tolist()
-
-        df["matrix"] = denselist
-        return df
-
-    if lsa and tfidf:
-        # Add tfidf vectorizer and remove stopwords
-        vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
-            lowercase=True, stop_words=filler_words
-        )
-        text = vectorizer.fit_transform(text)
-
-        # Define the LSA function
-        vectors = sklearn.decomposition.TruncatedSVD(n_components=100, random_state=100)
-
-        # Convert text to vectors
-        vectors.fit(text)
-        svd_matrix = vectors.fit_transform(text)
-        svd_matrix = sklearn.preprocessing.Normalizer(copy=False).fit_transform(text)
-
-        dense = svd_matrix.todense()
-        denselist = dense.tolist()
-
-        df["matrix"] = denselist
-        return df
-
-    if not tfidf and not lsa:
-        # Vectorization
-        vectors = sklearn.feature_extraction.text.CountVectorizer(
-            lowercase=True, stop_words=filler_words
-        ).fit_transform(text.tolist())
-        dense = vectors.todense()
-        denselist = dense.tolist()
-        df["matrix"] = denselist
-        return df
