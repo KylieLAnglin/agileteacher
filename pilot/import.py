@@ -53,4 +53,3 @@ for participant in participant_list:
 
 text_df.to_csv(os.path.join(start.clean_data_path, "text.csv"))
 
-text_df2 = clean.preprocessing(text_df, remove_stopwords=True)
