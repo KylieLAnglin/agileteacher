@@ -24,3 +24,4 @@ matrix2 = clean.vectorize_text(
 )
 lsas = clean.create_lsa_dfs(matrix=matrix2)
 lsas.word_weights.head(20)
+lsas.matrix
