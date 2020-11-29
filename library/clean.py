@@ -1,6 +1,7 @@
 # %%
 import collections
 import os
+import re
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
@@ -21,7 +22,7 @@ def vectorize_text(
     remove_stopwords: bool = False,
     tfidf: bool = False,
     lemma: bool = False,
-    lsa: bool = False
+    lsa: bool = False,
 ):
     docs = list(df[text_col])
     if remove_stopwords == False:
@@ -31,8 +32,10 @@ def vectorize_text(
         stop_words = list(stopwords.words("english"))
 
     if lemma:
-        docs = [" ".join([token.lemma_ for token in nlp(text)]) for text in df[text_col]]
-        
+        docs = [
+            " ".join([token.lemma_ for token in nlp(text)]) for text in df[text_col]
+        ]
+
     if tfidf == False:
         vec = CountVectorizer(stop_words=stop_words)
 
@@ -52,7 +55,9 @@ def vectorize_text(
     return matrix
 
 
-def create_lsa_dfs(matrix: pd.DataFrame, n_components: int=100, random_state: int=100):
+def create_lsa_dfs(
+    matrix: pd.DataFrame, n_components: int = 100, random_state: int = 100
+):
 
     lsa = TruncatedSVD(n_components=n_components, random_state=random_state)
     lsa_fit = lsa.fit_transform(matrix)
@@ -76,20 +81,13 @@ def create_lsa_dfs(matrix: pd.DataFrame, n_components: int=100, random_state: in
     return new
 
 
-def doc_len_list(doc_list: list, ignore_less_than: int = 0):
-    """list of number of tokens in spacy docs
+def create_corpus_from_series(series: pd.Series):
+    text = ""
+    for row in series:
+        text = text + row
+    return text
 
-    Args:
-        doc_list (list): list of spacy Docs
-        ignore_empty (bool, optional): Include empty documents? Defaults to True.
 
-    Returns:
-        float: average number of tokens in spacy docs
-    """
-    lens = []
-    [
-        lens.append(len(doc)) if len(doc) >= ignore_less_than else lens.append(None)
-        for doc in doc_list
-    ]
-
-    return lens
+def remove_tags(text: str, regex_str: str):
+    text = re.sub(regex_str, " ", text)
+    return text
