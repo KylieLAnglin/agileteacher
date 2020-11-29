@@ -11,6 +11,7 @@ from agileteacher.library import clean
 # %%
 df = pd.read_csv(os.path.join(start.clean_data_path, "text.csv"))
 df = df[["id", "attempt", "text"]]
+df["new_index"] = df["id"].map(str) + df["attempt"].map(str)
 df.sample(5)
 
 # %%
@@ -18,7 +19,7 @@ matrix = clean.vectorize_text(
     df, text_col="text", remove_stopwords=True, tfidf=True, lemma=False, lsa=False
 )
 # %%
-num_clusters = 2
+num_clusters = 3
 km = KMeans(n_clusters=num_clusters)
 km.fit(matrix)
 clusters = km.labels_.tolist()
@@ -79,7 +80,7 @@ pos = mds.fit_transform(dist)  # shape (n_components, n_samples)
 xs, ys = pos[:, 0], pos[:, 1]
 
 # %%
-new_df = pd.DataFrame(dict(x=xs, y=ys, label=clusters, name=df.id)) 
+new_df = pd.DataFrame(dict(x=xs, y=ys, label=clusters, name=df.new_index)) 
 groups = new_df.groupby('label')
 
 #some ipython magic to show the matplotlib plots inline
@@ -119,3 +120,5 @@ for i in range(len(new_df)):
     
 plt.show() #show the plot
 
+
+# %%
