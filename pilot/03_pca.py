@@ -57,12 +57,18 @@ components = (
     .transpose()
     .sort_values(0)
 )
-components.head(20)
-
-# %%
-components.tail(20).sort_values(by=0, ascending=False)
-
-# %%
 components.to_csv(start.results_path + "Pilot Study/pca.csv")
+components.head()
+# %%
+components.sort_values(by=0, ascending=False).head(10)
+
+# %%
+components.sort_values(by=0, ascending=False).tail(10)
+
+# %%
+components.sort_values(by=1, ascending=False).head(10)
+
+# %%
+components.sort_values(by=1, ascending=False).tail(10)
 
 # %%

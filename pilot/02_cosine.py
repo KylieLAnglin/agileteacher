@@ -17,7 +17,12 @@ df = df.set_index("new_index").sort_index()
 
 # %%
 matrix = clean.vectorize_text(
-    df, text_col="text_clean", remove_stopwords=True, tfidf=True, lemma=True, lsa=False
+    df,
+    text_col="text_clean",
+    remove_stopwords=False,
+    tfidf=True,
+    lemma=False,
+    lsa=False,
 )
 
 # %%

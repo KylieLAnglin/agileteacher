@@ -137,4 +137,54 @@ doc_lda = lda_model[corpus]
 pyLDAvis.enable_notebook()
 vis = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
 vis
+
+# %%
+lda_
+
+# %%
+def lda_to_csv(model, corpus):
+    """This function takes a gensim lda model as input, and outputs a csv with topics probs by document"""
+    topic_probs = model.get_document_topics(
+        corpus
+    )  # get the list of topic probabilities by doc
+    topic_dict = [
+        dict(x) for x in topic_probs
+    ]  # convert to dictionary to convert to data frame
+    df = pd.DataFrame(topic_dict).fillna(
+        0
+    )  # convert to data frame, fill topics < 0.01 as 0
+    return df
+
+
+docs = lda_to_csv(lda_model, corpus)
+
+# %%
+docs.sort_values(by=0, ascending=False)
+data_words[349]
+
+# %%
+data_words[82]
+
+# %%
+data_words[631]
+
+# %%
+docs.sort_values(by=1, ascending=False)
+
+# %%
+data_words[405]
+
+
+# %%
+data_words[609]
+
+# %%
+data_words[381]
+
+# %%
+docs.sort_values(by=2, ascending=False)
+data_words[458]
+data_words[501]
+
+
 # %%
