@@ -7,12 +7,6 @@ text = "So, now we're going to take ten seconds for each partner."
 text_df = pd.DataFrame({"text": [text]})
 
 
-result = process_text.vectorize_text(
-    text_df, "text", remove_stopwords=False, tfidf=True, lemma=False, lsa=False
-)
-result
-
-
 def test_process_text():
     text_result = process_text.process_text(
         text_df,

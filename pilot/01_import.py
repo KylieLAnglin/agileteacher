@@ -7,7 +7,7 @@ import numpy as np
 
 
 from agileteacher.library import start
-from agileteacher.library import clean
+from agileteacher.library import process_text
 
 # %%
 column_names = {"Quote from transcript": "quote", "Coding Period": "period"}
@@ -59,7 +59,7 @@ participant_list = [
     ("Samantha - lower codes + time (", "samantha"),
 ]
 for participant in participant_list:
-    df = df = pd.read_excel(
+    df = pd.read_excel(
         os.path.join(start.raw_data_path, "pilot_study_data.xlsx"),
         sheet_name=participant[0],
         skiprows=5,
@@ -68,13 +68,25 @@ for participant in participant_list:
 
 text_df["new_index"] = text_df["id"].map(str) + text_df["attempt"].map(str)
 text_df = text_df.set_index("new_index").sort_index()
+
+
 # %%
-text_df["text_clean"] = [clean.remove_tags(txt, r"\[(.*?)\]") for txt in text_df.text]
+text_df["text_clean"] = [
+    process_text.remove_tags(txt, r"\[(.*?)\]") for txt in text_df.text
+]
 
 text_df["text_clean"] = [re.sub(r"30", "thirty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"20", "twenty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"10", "ten", txt) for txt in text_df.text_clean]
 
+text_df["text_filtered"] = process_text.process_text(
+    text_df,
+    "text_clean",
+    lower_case=True,
+    remove_punct=False,
+    remove_stopwords=True,
+    lemma=True,
+)
 
 # %%
 text_df.to_csv(os.path.join(start.clean_data_path, "text.csv"))

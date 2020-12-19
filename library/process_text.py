@@ -1,8 +1,10 @@
 # %%
+import re
+import collections
+
 import spacy
 import nltk
 import pandas as pd
-import collections
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -12,6 +14,7 @@ from agileteacher.library import start
 nlp = spacy.load("en", disable=["parser", "ner"])
 
 # %% Replace spacy stop word list with nltks
+
 spacy_stopwords = spacy.lang.en.stop_words.STOP_WORDS
 nltk_stopwords = set(nltk.corpus.stopwords.words("english"))
 
@@ -21,38 +24,40 @@ for word in spacy_stopwords:
             lexeme = nlp.vocab[word]
             lexeme.is_stop = False
 
+contractions = ["n't", "'d", "'ll", "'m", "'re", "'s", "'ve"]
+
 # %%
 def process_text(
-    df: pd.DataFrame,
-    text_col: str,
+    text: str,
     lower_case: bool = True,
     remove_punct: bool = True,
     remove_stopwords: bool = False,
     lemma: bool = False,
 ):
 
-    raw = list(df[text_col])
-    docs = [" ".join([token.text for token in nlp(text)]) for text in raw]
-
-    if lower_case:
-        docs = [" ".join([token.lower_ for token in nlp(text)]) for text in raw]
-
-    if remove_punct:
-        docs = [
-            " ".join([token.text for token in nlp(text) if not token.is_punct])
-            for text in docs
-        ]
-
-    if remove_stopwords:
-        docs = [
-            " ".join([token.text for token in nlp(text) if not token.is_stop])
-            for text in docs
-        ]
+    doc = " ".join([token.text for token in nlp(text)])
 
     if lemma:
-        docs = [" ".join([token.lemma_ for token in nlp(text)]) for text in docs]
+        doc = " ".join([token.lemma_ for token in nlp(doc)])
 
-    return docs
+    if remove_stopwords:
+        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
+
+    if remove_punct:
+        doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
+
+    if lower_case:
+        doc = " ".join([token.lower_ for token in nlp(doc)])
+
+    return doc
+
+
+text = "Hi everybody. I'm going to show you something for a few seconds."
+process_text(
+    text, lower_case=False, remove_punct=False, remove_stopwords=False, lemma=True
+)
+
+# %%
 
 
 def vectorize_text(
