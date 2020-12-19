@@ -47,6 +47,7 @@ df = pd.read_excel(
     os.path.join(start.raw_data_path, "pilot_study_data.xlsx"),
     sheet_name="Esteban - lower codes and time",
     skiprows=5,
+    engine="openpyxl",
 )
 text_df = create_participant_df(df=df, name="esteban")
 
@@ -63,6 +64,7 @@ for participant in participant_list:
         os.path.join(start.raw_data_path, "pilot_study_data.xlsx"),
         sheet_name=participant[0],
         skiprows=5,
+        engine="openpyxl",
     )
     text_df = text_df.append(create_participant_df(df=df, name=participant[1]))
 
@@ -79,14 +81,16 @@ text_df["text_clean"] = [re.sub(r"30", "thirty", txt) for txt in text_df.text_cl
 text_df["text_clean"] = [re.sub(r"20", "twenty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"10", "ten", txt) for txt in text_df.text_clean]
 
-text_df["text_filtered"] = process_text.process_text(
-    text_df,
-    "text_clean",
-    lower_case=True,
-    remove_punct=False,
-    remove_stopwords=True,
-    lemma=True,
-)
+text_df["text_filtered"] = [
+    process_text.process_text(
+        text,
+        lower_case=True,
+        remove_punct=True,
+        remove_stopwords=True,
+        lemma=True,
+    )
+    for text in text_df.text_clean
+]
 
 # %%
 text_df.to_csv(os.path.join(start.clean_data_path, "text.csv"))
