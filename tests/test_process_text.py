@@ -33,7 +33,8 @@ def test_process_text():
         remove_stopwords=True,
         lemma=True,
     )
-    assert "seconds" not in text_result4[0] and "so" not in text_result4[0]
+    print(text_result4)
+    assert "-pron-" not in text_result4
 
 
 def test_vectorize_text():

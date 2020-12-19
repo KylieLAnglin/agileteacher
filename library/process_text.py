@@ -36,14 +36,14 @@ def process_text(
     lemma: bool = False,
 ):
 
-    if not lemma:
+    if not remove_stopwords:
         doc = " ".join([token.text for token in nlp(text)])
 
-    else:
-        doc = " ".join([token.lemma_ for token in nlp(text)])
+    elif remove_stopwords:
+        doc = " ".join([token.text for token in nlp(text) if not token.is_stop])
 
-    if remove_stopwords:
-        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
+    if lemma:
+        doc = " ".join([token.lemma_ for token in nlp(doc)])
 
     if remove_punct:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
