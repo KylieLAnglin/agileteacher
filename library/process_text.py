@@ -8,6 +8,7 @@ import pandas as pd
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from nltk.corpus import stopwords
 
 from agileteacher.library import start
 
@@ -35,10 +36,11 @@ def process_text(
     lemma: bool = False,
 ):
 
-    doc = " ".join([token.text for token in nlp(text)])
+    if not lemma:
+        doc = " ".join([token.text for token in nlp(text)])
 
-    if lemma:
-        doc = " ".join([token.lemma_ for token in nlp(doc)])
+    else:
+        doc = " ".join([token.lemma_ for token in nlp(text)])
 
     if remove_stopwords:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
@@ -52,11 +54,6 @@ def process_text(
     return doc
 
 
-text = "Hi everybody. I'm going to show you something for a few seconds."
-process_text(
-    text, lower_case=False, remove_punct=False, remove_stopwords=False, lemma=True
-)
-
 # %%
 
 
@@ -68,14 +65,17 @@ def vectorize_text(
     lemma: bool = False,
     lsa: bool = False,
 ):
-    docs = process_text(
-        df=df,
-        text_col=text_col,
-        lower_case=False,
-        remove_punct=False,
-        remove_stopwords=remove_stopwords,
-        lemma=lemma,
-    )
+
+    docs = [
+        process_text(
+            text,
+            lower_case=False,
+            remove_punct=False,
+            remove_stopwords=remove_stopwords,
+            lemma=lemma,
+        )
+        for text in df[text_col]
+    ]
 
     if tfidf == False:
         vec = CountVectorizer()
