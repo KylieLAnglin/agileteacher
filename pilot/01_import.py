@@ -68,8 +68,8 @@ for participant in participant_list:
     )
     text_df = text_df.append(create_participant_df(df=df, name=participant[1]))
 
-text_df["new_index"] = text_df["id"].map(str) + text_df["attempt"].map(str)
-text_df = text_df.set_index("new_index").sort_index()
+text_df["id_attempt"] = text_df["id"].map(str) + text_df["attempt"].map(str)
+text_df = text_df.set_index("id_attempt").sort_index()
 
 
 # %%
@@ -86,7 +86,7 @@ text_df["text_filtered"] = [
         text,
         lower_case=True,
         remove_punct=True,
-        remove_stopwords=True,
+        remove_stopwords=False,
         lemma=True,
     )
     for text in text_df.text_clean
