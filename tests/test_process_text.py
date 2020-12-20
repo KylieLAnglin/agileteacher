@@ -1,6 +1,7 @@
-from agileteacher.library import process_text
-
 import pandas as pd
+import scipy
+
+from agileteacher.library import process_text
 
 
 text = "So, now we're going to take ten seconds for each partner."
@@ -55,3 +56,27 @@ def test_vectorize_text():
     )
     assert len(result.columns) == 12
     assert "be" in list(result.columns)
+
+
+def test_what_words_matter():
+    test = pd.DataFrame(
+        {
+            "word1": [1, 5],
+            "word2": [5, 1],
+            "word3": [3, 3],
+            "word4": [4, 1],
+            "word5": [2, 4],
+            "words6": [0, 0],
+            "words7": [1, 1],
+        }
+    )
+
+    test2 = test.copy()
+    test2["words8"] = [100, 200]
+    # print(1 - scipy.spatial.distance.cosine(test.loc[0], test.loc[1]))
+    # print(1 - scipy.spatial.distance.cosine(test2.loc[0], test2.loc[1]))
+
+    result = process_text.what_words_matter(test2, 0, 1, 3)
+    # print(result)
+
+    assert result.loc[("0distinct", "word2")][0] == 5

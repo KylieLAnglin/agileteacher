@@ -5,6 +5,8 @@ import collections
 import spacy
 import nltk
 import pandas as pd
+import numpy as np
+import scipy
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -132,3 +134,55 @@ def create_corpus_from_series(series: pd.Series):
 def remove_tags(text: str, regex_str: str):
     text = re.sub(regex_str, " ", text)
     return text
+
+
+# %%
+
+
+def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int = 5):
+    """Given a two vectors in a doc-term matrix, show words /
+    that discriminate between the documents.
+
+    Args:
+        doc_term_matrix (pd.DataFrame): DF with terms in columns, freq in rows
+        row1 ([type]): index of first doc
+        row2 ([type]): index of other doc
+        show_num (int): number of words to show
+    """
+
+    new_df = doc_term_matrix.loc[[row1, row2]]
+
+    # divide by total word count
+    new_df["total"] = new_df.sum(axis=1)
+    totals = list(new_df.total)
+
+    new_df = new_df.div(new_df.total, axis=0).drop(columns=["total"])
+
+    new_df = new_df.T.reset_index()
+    new_df["diff"] = new_df[row1] - new_df[row2]
+    new_df["abs"] = new_df["diff"].abs()
+
+    new_df = new_df[(new_df[row1] != 0) | (new_df[row2] != 0)]
+
+    new_df[str(row1) + "_p"] = new_df[row1].round(2)
+    new_df[str(row2) + "_p"] = new_df[row2].round(2)
+
+    new_df[row1] = new_df[row1] * totals[0]
+    new_df[row2] = new_df[row2] * totals[1]
+
+    row1_df = new_df.sort_values(by="diff").tail(show_num)
+    row1_df["type"] = str(row1) + "distinct"
+
+    row2_df = new_df.sort_values(by="diff").head(show_num)
+    row2_df["type"] = str(row2) + "distinct"
+
+    sim_df = new_df.sort_values(by="abs").head(show_num)
+    sim_df["type"] = "shared"
+
+    words = (
+        row1_df.append(sim_df)
+        .append(row2_df)
+        .set_index(["type", "index"])[[row1, row2, str(row1) + "_p", str(row2) + "_p"]]
+    )
+
+    return words
