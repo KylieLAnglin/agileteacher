@@ -6,17 +6,17 @@ from openpyxl import load_workbook
 import scipy
 
 from agileteacher.library import start
-from agileteacher.library import clean
+from agileteacher.library import process_text
 
 # %%
-df = pd.read_csv(os.path.join(start.clean_data_path, "text.csv"))
+df = pd.read_csv(os.path.join(start.clean_data_path, "text.csv")).set_index(
+    "id_attempt"
+)
 df = df[["id", "attempt", "text_clean"]]
 
-df["new_index"] = df["id"].map(str) + df["attempt"].map(str)
-df = df.set_index("new_index").sort_index()
 
 # %%
-matrix = clean.vectorize_text(
+matrix = process_text.vectorize_text(
     df,
     text_col="text_clean",
     remove_stopwords=False,
@@ -25,8 +25,8 @@ matrix = clean.vectorize_text(
     lsa=False,
 )
 
-# %%
-file = start.results_path + "Pilot Study/Cosine Replicability.xlsx"
+
+file = start.results_path + "Pilot Study/Cosine Replicability All Words.xlsx"
 wb = load_workbook(file)
 ws = wb.active
 # %%
@@ -40,5 +40,3 @@ for main in list(df.index):
     col = col + 1
 
 wb.save(file)
-
-# %%
