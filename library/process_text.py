@@ -5,9 +5,14 @@ import collections
 import spacy
 import nltk
 import pandas as pd
+import numpy as np
+import scipy
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
+from nltk.corpus import stopwords
 
 from agileteacher.library import start
 
@@ -35,13 +40,14 @@ def process_text(
     lemma: bool = False,
 ):
 
-    doc = " ".join([token.text for token in nlp(text)])
+    if not remove_stopwords:
+        doc = " ".join([token.text for token in nlp(text)])
+
+    elif remove_stopwords:
+        doc = " ".join([token.text for token in nlp(text) if not token.is_stop])
 
     if lemma:
         doc = " ".join([token.lemma_ for token in nlp(doc)])
-
-    if remove_stopwords:
-        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
 
     if remove_punct:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
@@ -51,11 +57,6 @@ def process_text(
 
     return doc
 
-
-text = "Hi everybody. I'm going to show you something for a few seconds."
-process_text(
-    text, lower_case=False, remove_punct=False, remove_stopwords=False, lemma=True
-)
 
 # %%
 
@@ -67,15 +68,19 @@ def vectorize_text(
     tfidf: bool = False,
     lemma: bool = False,
     lsa: bool = False,
+    n_components: int = 100,
 ):
-    docs = process_text(
-        df=df,
-        text_col=text_col,
-        lower_case=False,
-        remove_punct=False,
-        remove_stopwords=remove_stopwords,
-        lemma=lemma,
-    )
+
+    docs = [
+        process_text(
+            text,
+            lower_case=False,
+            remove_punct=False,
+            remove_stopwords=remove_stopwords,
+            lemma=lemma,
+        )
+        for text in df[text_col]
+    ]
 
     if tfidf == False:
         vec = CountVectorizer()
@@ -89,7 +94,7 @@ def vectorize_text(
     print("Number of words: ", len(matrix.columns))
 
     if lsa:
-        lsa_dfs = create_lsa_dfs(matrix=matrix)
+        lsa_dfs = create_lsa_dfs(matrix=matrix, n_components=n_components)
         matrix = lsa_dfs.matrix
         print("Number of dimensions: ", len(matrix.columns))
 
@@ -112,7 +117,6 @@ def create_lsa_dfs(
 
     # Each document is a linear combination of components
     matrix_lsa = pd.DataFrame(lsa_fit, index=matrix.index, columns=word_weights.index)
-    matrix_lsa.sample(5)
 
     word_weights = word_weights_trans.sort_values(by=[0], ascending=False)
 
@@ -132,3 +136,55 @@ def create_corpus_from_series(series: pd.Series):
 def remove_tags(text: str, regex_str: str):
     text = re.sub(regex_str, " ", text)
     return text
+
+
+# %%
+
+# TODO: Doesn't work with multiindex
+def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int = 5):
+    """Given a two vectors in a doc-term matrix, show words /
+    that discriminate between the documents.
+
+    Args:
+        doc_term_matrix (pd.DataFrame): DF with terms in columns, freq in rows
+        row1 ([type]): index of first doc
+        row2 ([type]): index of other doc
+        show_num (int): number of words to show
+    """
+
+    new_df = doc_term_matrix.loc[[row1, row2]]
+
+    # divide by total word count
+    new_df["total"] = new_df.sum(axis=1)
+    totals = list(new_df.total)
+
+    new_df = new_df.div(new_df.total, axis=0).drop(columns=["total"])
+
+    new_df = new_df.T.reset_index()
+    new_df["diff"] = new_df[row1] - new_df[row2]
+    new_df["abs"] = new_df["diff"].abs()
+
+    new_df = new_df[(new_df[row1] != 0) | (new_df[row2] != 0)]
+
+    new_df["row1_p"] = new_df[row1].round(2)
+    new_df["row2_p"] = new_df[row2].round(2)
+
+    new_df["row1"] = new_df[row1] * totals[0]
+    new_df["row2"] = new_df[row2] * totals[1]
+
+    row1_df = new_df.sort_values(by="diff").tail(show_num)
+    row1_df["type"] = "row1_distinct"
+
+    row2_df = new_df.sort_values(by="diff").head(show_num)
+    row2_df["type"] = "row2_distinct"
+
+    sim_df = new_df.sort_values(by="abs").head(show_num)
+    sim_df["type"] = "shared"
+
+    words = (
+        row1_df.append(sim_df)
+        .append(row2_df)
+        .set_index(["type", "index"])[["row1", "row2", "row1_p", "row2_p"]]
+    )
+
+    return words
