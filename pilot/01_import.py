@@ -5,9 +5,9 @@ import re
 import pandas as pd
 import numpy as np
 
-
 from agileteacher.library import start
 from agileteacher.library import process_text
+from agileteacher.library import clean_text
 
 # %%
 column_names = {"Quote from transcript": "quote", "Coding Period": "period"}
@@ -72,21 +72,24 @@ text_df = text_df.set_index("new_index").sort_index()
 
 # %%
 text_df["text_clean"] = [
-    process_text.remove_tags(txt, r"\[(.*?)\]") for txt in text_df.text
+    clean_text.remove_tags(txt, r"\[(.*?)\]") for txt in text_df.text
 ]
 
 text_df["text_clean"] = [re.sub(r"30", "thirty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"20", "twenty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"10", "ten", txt) for txt in text_df.text_clean]
 
-text_df["text_filtered"] = process_text.process_text(
-    text_df,
-    "text_clean",
-    lower_case=True,
-    remove_punct=False,
-    remove_stopwords=True,
-    lemma=True,
-)
+text_df["text_filtered"] = [
+    process_text.process_text(
+        text=text,
+        lower_case=True,
+        remove_punct=False,
+        remove_stopwords=True,
+        lemma=True,
+    )
+    for text in text_df.text_clean
+]
+
 
 # %%
 text_df.to_csv(os.path.join(start.clean_data_path, "text.csv"))
