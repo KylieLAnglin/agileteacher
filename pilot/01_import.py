@@ -79,13 +79,23 @@ text_df["text_clean"] = [re.sub(r"30", "thirty", txt) for txt in text_df.text_cl
 text_df["text_clean"] = [re.sub(r"20", "twenty", txt) for txt in text_df.text_clean]
 text_df["text_clean"] = [re.sub(r"10", "ten", txt) for txt in text_df.text_clean]
 
-text_df["text_filtered"] = [
+text_df["text_clean"] = [
+    clean_text.add_whitespace_after_punct(txt) for txt in text_df.text_clean
+]
+
+text_df["text_clean"] = [
+    clean_text.remove_trailing_hyphen(txt) for txt in text_df.text_clean
+]
+
+# %%
+
+text_df["text_processed"] = [
     process_text.process_text(
         text=text,
         lower_case=True,
-        remove_punct=False,
+        remove_punct=True,
         remove_stopwords=True,
-        lemma=True,
+        lemma=False,
     )
     for text in text_df.text_clean
 ]
