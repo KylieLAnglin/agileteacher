@@ -64,3 +64,25 @@ def test_vectorize_text():
     )
     assert len(result.columns) == 12
     assert "be" in list(result.columns)
+
+
+def test_ave_word_embedding_for_doc():
+    test1 = "Hi, class. So next, we're going to work on a small activity."
+    assert len(process_text.ave_word_embedding_for_doc(test1)) == 300
+
+
+def test_doc_matrix_with_embeddings():
+    result = process_text.doc_matrix_with_embeddings(text_df, "text")
+    assert len(result) == 1
+    assert len(result.columns == 300)
+
+
+tfidf_test = pd.DataFrame({"the": [1], "cat": [2]})
+
+
+def test_weighted_ave_word_embedding_for_doc():
+    result = process_text.weighted_ave_word_embedding_for_doc(tfidf_test, 0)
+    return result
+
+
+result = test_weighted_ave_word_embedding_for_doc()

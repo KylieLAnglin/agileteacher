@@ -87,6 +87,8 @@ text_df["text_clean"] = [
     clean_text.remove_trailing_hyphen(txt) for txt in text_df.text_clean
 ]
 
+text_df["text_clean"] = [re.sub(r"/\n/", "", txt) for txt in text_df.text_clean]
+
 # %%
 
 text_df["text_processed"] = [
@@ -95,7 +97,7 @@ text_df["text_processed"] = [
         lower_case=True,
         remove_punct=True,
         remove_stopwords=True,
-        lemma=False,
+        lemma=True,
     )
     for text in text_df.text_clean
 ]
