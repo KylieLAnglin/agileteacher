@@ -33,6 +33,8 @@ contractions = ["n't", "'d", "'ll", "'m", "'re", "'s", "'ve"]
 spacy_stopwords.update(["-pron-", "-PRON-"])
 
 # %%
+
+# %%
 def process_text(
     text: str,
     lower_case: bool = True,
@@ -47,6 +49,9 @@ def process_text(
     elif not lemma:
         doc = " ".join([token.text for token in nlp(text)])
 
+    if remove_stopwords:
+        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
+
     if remove_punct:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
 
@@ -54,6 +59,9 @@ def process_text(
         doc = " ".join([token.lower_ for token in nlp(doc)])
 
     return doc
+
+
+# %%
 
 
 # %%
