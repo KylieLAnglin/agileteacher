@@ -27,7 +27,6 @@ def test_process_text():
     )
     assert "so" not in text_result2
 
-<<<<<<< HEAD
     text_result3 = process_text.process_text(
         text,
         lower_case=True,
@@ -39,21 +38,12 @@ def test_process_text():
 
     text_result4 = process_text.process_text(
         "text",
-=======
-    text_result4 = process_text.process_text(
-        text,
->>>>>>> 2be18ef747059a89a15ca8aa57ef129e51889d26
         lower_case=True,
         remove_punct=True,
         remove_stopwords=True,
         lemma=True,
     )
-<<<<<<< HEAD
     assert "seconds" not in text_result4 and "so" not in text_result4
-=======
-    print(text_result4)
-    assert "-pron-" not in text_result4
->>>>>>> 2be18ef747059a89a15ca8aa57ef129e51889d26
 
 
 def test_vectorize_text():
@@ -96,6 +86,8 @@ def test_weighted_ave_word_embedding_for_doc():
 
 
 result = test_weighted_ave_word_embedding_for_doc()
+
+
 def test_what_words_matter():
     test = pd.DataFrame(
         {
@@ -115,6 +107,6 @@ def test_what_words_matter():
     # print(1 - scipy.spatial.distance.cosine(test2.loc[0], test2.loc[1]))
 
     result = process_text.what_words_matter(test2, 0, 1, 3)
-    # print(result)
+    print(result)
 
-    assert result.loc[("0distinct", "word2")][0] == 5
+    assert result.loc[("row1_distinct", "word2")][0] == 5
