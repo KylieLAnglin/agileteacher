@@ -58,4 +58,18 @@ print("dist_1: {0}, dist_2: {1}".format(dist_1, dist_2))
 assert dist_1 < dist_2
 # dist_1: 0.043, dist_2: 0.192
 
+import text2vec
+
+import pandas as pd
+from openpyxl import load_workbook
+import scipy
+
+from agileteacher.library import start
+from agileteacher.library import process_text
+
+# %%
+df = pd.read_csv(start.clean_data_path + "text.csv").set_index("id_attempt")
+
+# %%
+t2v = text2vec(list(df.text_clean))
 # %%

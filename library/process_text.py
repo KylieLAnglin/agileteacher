@@ -47,9 +47,6 @@ def process_text(
     elif not lemma:
         doc = " ".join([token.text for token in nlp(text)])
 
-    if remove_stopwords:
-        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
-
     if remove_punct:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
 
@@ -141,7 +138,7 @@ def remove_tags(text: str, regex_str: str):
 
 # %%
 
-# TODO: Doesn't work with multiindex
+
 def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int = 5):
     """Given a two vectors in a doc-term matrix, show words /
     that discriminate between the documents.

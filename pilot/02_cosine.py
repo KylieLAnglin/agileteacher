@@ -9,11 +9,11 @@ from agileteacher.library import start
 from agileteacher.library import process_text
 
 # %%
-df = pd.read_csv(os.path.join(start.clean_data_path, "text.csv"))
+df = pd.read_csv(os.path.join(start.clean_data_path, "text.csv")).set_index(
+    "id_attempt"
+)
 df = df[["id", "attempt", "text_clean"]]
 
-df["new_index"] = df["id"].map(str) + df["attempt"].map(str)
-df = df.set_index("new_index").sort_index()
 
 # %% Version 1
 matrix = process_text.vectorize_text(
@@ -103,5 +103,3 @@ for main in list(df.index):
     col = col + 1
 
 wb.save(file)
-
-# %%

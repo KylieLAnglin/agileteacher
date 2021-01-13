@@ -47,6 +47,7 @@ df = pd.read_excel(
     os.path.join(start.raw_data_path, "pilot_study_data.xlsx"),
     sheet_name="Esteban - lower codes and time",
     skiprows=5,
+    engine="openpyxl",
 )
 text_df = create_participant_df(df=df, name="esteban")
 
@@ -63,11 +64,12 @@ for participant in participant_list:
         os.path.join(start.raw_data_path, "pilot_study_data.xlsx"),
         sheet_name=participant[0],
         skiprows=5,
+        engine="openpyxl",
     )
     text_df = text_df.append(create_participant_df(df=df, name=participant[1]))
 
-text_df["new_index"] = text_df["id"].map(str) + text_df["attempt"].map(str)
-text_df = text_df.set_index("new_index").sort_index()
+text_df["id_attempt"] = text_df["id"].map(str) + text_df["attempt"].map(str)
+text_df = text_df.set_index("id_attempt").sort_index()
 
 
 # %%
@@ -101,7 +103,6 @@ text_df["text_processed"] = [
     )
     for text in text_df.text_clean
 ]
-
 
 # %%
 text_df.to_csv(os.path.join(start.clean_data_path, "text.csv"))
