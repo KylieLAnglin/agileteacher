@@ -1,6 +1,6 @@
-dir = "/Users/kylieanglin/Dropbox/agileteacher/"
+DIR = "/Users/kylie/Dropbox/agileteacher/"
 
-raw_data_path = dir + "data/raw/"
-clean_data_path = dir + "data/clean/"
+RAW_DATA_PATH = DIR + "data/raw/"
+CLEAN_DATA_PATH = DIR + "data/clean/"
 
-results_path = dir + "results/"
+RESULTS_PATH = DIR + "results/"

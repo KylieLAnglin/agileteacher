@@ -163,6 +163,7 @@ def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int =
     # divide by total word count
     new_df["total"] = new_df.sum(axis=1)
     totals = list(new_df.total)
+    print(totals)
 
     new_df = new_df.div(new_df.total, axis=0).drop(columns=["total"])
 
@@ -194,6 +195,18 @@ def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int =
     )
 
     return words
+
+
+def top_terms(doc_term_matrix: pd.DataFrame, row, show_num: int = 5):
+    new_df = doc_term_matrix.loc[row].to_frame().sort_values(by=row, ascending=False)
+
+    # divide by total word count
+    total = int(new_df.sum(axis=0))
+    print(total)
+
+    # new_df = new_df.div(new_df.total, axis=0).drop(columns=["total"])
+
+    return new_df.head(show_num)
 
 
 def doc_matrix_with_embeddings(df: pd.DataFrame, text_col: str):
