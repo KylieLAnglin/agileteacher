@@ -24,7 +24,7 @@ df = df[COLUMNS]
 matrix = process_text.vectorize_text(
     df,
     text_col="text_clean",
-    remove_stopwords=False,
+    remove_stopwords=True,
     tfidf=False,
     lemma=False,
     lsa=False,
@@ -44,6 +44,8 @@ for main in list(matrix.index):
     col = col + 1
 
 wb.save(file)
+
+# %%
 
 
 process_text.what_words_matter(matrix, "jonathan1", "jonathan3", 10)

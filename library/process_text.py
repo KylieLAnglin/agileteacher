@@ -30,9 +30,65 @@ for word in spacy_stopwords:
             lexeme.is_stop = False
 
 contractions = ["n't", "'d", "'ll", "'m", "'re", "'s", "'ve"]
-spacy_stopwords.update(["-pron-", "-PRON-"])
+
+spacy_stopwords.update(contractions)
+spacy_stopwords.update(
+    [
+        "-pron-",
+        "-PRON-",
+    ]
+)
+
+spacy_stopwords.update(
+    [
+        "um",
+        "uhm",
+        "umm",
+        "uh",
+        "okay",
+        "so",
+        "yeah",
+        "like",
+        "really",
+    ]
+)
+
+for word in spacy_stopwords:
+    lexeme = nlp.vocab[word]
+    lexeme.is_stop = True
 
 # %%
+def process_text_nltk(
+    text: str,
+    lower_case: bool = True,
+    remove_punct: bool = True,
+    remove_stopwords: bool = False,
+    lemma: bool = False,
+):
+
+    tokens = nltk.word_tokenize(text)
+
+    if lower_case:
+        tokens = [token.lower() if token.isalpha() else token for token in tokens]
+
+    if remove_punct:
+        tokens = [token for token in tokens if token.isalpha()]
+
+    if remove_stopwords:
+        tokens = [token for token in tokens if not token in spacy_stopwords]
+
+    if lemma:
+        tokens = [nltk.wordnet.WordNetLemmatizer().lemmatize(token) for token in tokens]
+
+    # if lemma:  # lemma needs to go first because spacy lemmatizer depends on context
+    #     doc = " ".join([ps.stem(token)])
+
+    # elif not lemma:
+    #     doc = " ".join([token.text for token in nlp(text)])
+
+    doc = " ".join(tokens)
+    return doc
+
 
 # %%
 def process_text(
@@ -49,16 +105,45 @@ def process_text(
     elif not lemma:
         doc = " ".join([token.text for token in nlp(text)])
 
-    if remove_stopwords:
-        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
-
     if remove_punct:
         doc = " ".join([token.text for token in nlp(doc) if not token.is_punct])
 
     if lower_case:
         doc = " ".join([token.lower_ for token in nlp(doc)])
 
+    if remove_stopwords:
+        doc = " ".join([token.text for token in nlp(doc) if not token.is_stop])
+
     return doc
+
+
+def process_tokens_nltk(
+    tokens: list,
+    lower_case: bool = True,
+    remove_punct: bool = True,
+    remove_stopwords: bool = False,
+    lemma: bool = False,
+):
+
+    if lower_case:
+        tokens = [token.lower() if token.isalpha() else token for token in tokens]
+
+    if remove_punct:
+        tokens = [token for token in tokens if token.isalpha()]
+
+    if remove_stopwords:
+        tokens = [token for token in tokens if not token in spacy_stopwords]
+
+    if lemma:
+        tokens = [nltk.wordnet.WordNetLemmatizer().lemmatize(token) for token in tokens]
+
+    # if lemma:  # lemma needs to go first because spacy lemmatizer depends on context
+    #     doc = " ".join([ps.stem(token)])
+
+    # elif not lemma:
+    #     doc = " ".join([token.text for token in nlp(text)])
+
+    return tokens
 
 
 # %%
@@ -75,12 +160,13 @@ def vectorize_text(
     lemma: bool = False,
     lsa: bool = False,
     n_components: int = 100,
+    n_gram_range=(1, 1),
 ):
 
     docs = [
-        process_text(
+        process_text_nltk(
             text,
-            lower_case=False,
+            lower_case=True,
             remove_punct=False,
             remove_stopwords=remove_stopwords,
             lemma=lemma,
@@ -89,10 +175,10 @@ def vectorize_text(
     ]
 
     if tfidf == False:
-        vec = CountVectorizer()
+        vec = CountVectorizer(ngram_range=(1, 1))
 
     elif tfidf:
-        vec = TfidfVectorizer()
+        vec = TfidfVectorizer(ngram_range=(1, 1))
 
     X = vec.fit_transform(docs)
     matrix = pd.DataFrame(X.toarray(), columns=vec.get_feature_names(), index=df.index)
@@ -198,13 +284,12 @@ def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int =
 
 
 def top_terms(doc_term_matrix: pd.DataFrame, row, show_num: int = 5):
-    new_df = doc_term_matrix.loc[row].to_frame().sort_values(by=row, ascending=False)
+    words = list(doc_term_matrix.columns)
+    frequencies = list(doc_term_matrix.loc[row])
 
-    # divide by total word count
-    total = int(new_df.sum(axis=0))
-    print(total)
-
-    # new_df = new_df.div(new_df.total, axis=0).drop(columns=["total"])
+    new_df = pd.DataFrame(list(zip(words, frequencies)), columns=["words", "frequency"])
+    new_df = new_df.reset_index()
+    new_df = new_df.sort_values(by=["frequency"], ascending=False)
 
     return new_df.head(show_num)
 

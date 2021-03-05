@@ -43,6 +43,7 @@ trigram_mod = gensim.models.phrases.Phraser(trigram)
 # See trigram example
 print(trigram_mod[bigram_mod[data_words[6]]])
 
+
 # %%
 # Define functions for stopwords, bigrams, trigrams and lemmatization
 def remove_stopwords(texts):
