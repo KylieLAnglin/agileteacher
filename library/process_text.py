@@ -23,23 +23,19 @@ nlp = spacy.load("en_core_web_lg", disable=["parser", "ner"])
 spacy_stopwords = spacy.lang.en.stop_words.STOP_WORDS
 nltk_stopwords = set(nltk.corpus.stopwords.words("english"))
 
-for word in spacy_stopwords:
-    if word not in nltk_stopwords:
-        if not any(substring in word for substring in ["‘", "’", "'"]):
-            lexeme = nlp.vocab[word]
-            lexeme.is_stop = False
 
 contractions = ["n't", "'d", "'ll", "'m", "'re", "'s", "'ve"]
 
-spacy_stopwords.update(contractions)
-spacy_stopwords.update(
+stopwords = nltk_stopwords
+stopwords.update(contractions)
+stopwords.update(
     [
         "-pron-",
         "-PRON-",
     ]
 )
 
-spacy_stopwords.update(
+stopwords.update(
     [
         "um",
         "uhm",
@@ -53,7 +49,7 @@ spacy_stopwords.update(
     ]
 )
 
-for word in spacy_stopwords:
+for word in stopwords:
     lexeme = nlp.vocab[word]
     lexeme.is_stop = True
 
@@ -75,7 +71,7 @@ def process_text_nltk(
         tokens = [token for token in tokens if token.isalpha()]
 
     if remove_stopwords:
-        tokens = [token for token in tokens if not token in spacy_stopwords]
+        tokens = [token for token in tokens if not token in stopwords]
 
     if lemma:
         tokens = [nltk.wordnet.WordNetLemmatizer().lemmatize(token) for token in tokens]
@@ -132,24 +128,12 @@ def process_tokens_nltk(
         tokens = [token for token in tokens if token.isalpha()]
 
     if remove_stopwords:
-        tokens = [token for token in tokens if not token in spacy_stopwords]
+        tokens = [token for token in tokens if not token in stopwords]
 
     if lemma:
         tokens = [nltk.wordnet.WordNetLemmatizer().lemmatize(token) for token in tokens]
 
-    # if lemma:  # lemma needs to go first because spacy lemmatizer depends on context
-    #     doc = " ".join([ps.stem(token)])
-
-    # elif not lemma:
-    #     doc = " ".join([token.text for token in nlp(text)])
-
     return tokens
-
-
-# %%
-
-
-# %%
 
 
 def vectorize_text(
@@ -228,9 +212,6 @@ def create_corpus_from_series(series: pd.Series):
 def remove_tags(text: str, regex_str: str):
     text = re.sub(regex_str, " ", text)
     return text
-
-
-# %%
 
 
 def what_words_matter(doc_term_matrix: pd.DataFrame, row1, row2, show_num: int = 5):
