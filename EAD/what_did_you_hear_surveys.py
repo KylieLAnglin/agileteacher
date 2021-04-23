@@ -29,7 +29,7 @@ from agileteacher.library import process_text
 
 SURVEY1_PATH = (
     start.RAW_DATA_PATH
-    + "*EAD During Survey #1 (Reflection after Student Responses)_November 6, 2020_18.18.csv"
+    + "EAD During Survey #1 (Reflection after Student Responses)_April 23, 2021_12.34.csv"
 )
 
 # %%
@@ -47,12 +47,8 @@ texts = survey1.text
 list(survey1.sample().text)
 
 
-# %%
-token_lists = [nltk.word_tokenize(text) for text in texts]
-
-
 # %% Average length
-
+token_lists = [nltk.word_tokenize(text) for text in texts]
 lengths = [len(tokens) for tokens in token_lists]
 sum(lengths) / len(lengths)
 
@@ -71,7 +67,7 @@ text_processed = [
         lower_case=True,
         remove_punct=True,
         remove_stopwords=True,
-        lemma=False,
+        lemma=True,
     )
     for text in text_bigrams
 ]
@@ -90,7 +86,7 @@ corpus = [id2word.doc2bow(text) for text in text_processed]
 lda_model = gensim.models.ldamodel.LdaModel(
     corpus=corpus,
     id2word=id2word,
-    num_topics=7,
+    num_topics=3,
     random_state=100,
     update_every=1,
     chunksize=100,
@@ -139,17 +135,3 @@ for i in range(num_clusters):
         .sort_values(ascending=False)
         .head(10)
     )
-
-
-# %%
-# set up colors per clusters using a dict
-cluster_colors = {0: "#1b9e77", 1: "#d95f02", 2: "#7570b3", 3: "#e7298a", 4: "#66a61e"}
-
-# set up cluster names using a dict
-cluster_names = {
-    0: "0",
-    1: "1",
-    2: "Relationships",
-    3: "3",
-    4: "4",
-}
