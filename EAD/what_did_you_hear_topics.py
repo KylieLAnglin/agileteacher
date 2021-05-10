@@ -42,80 +42,56 @@ cols = qualtrics.search_column_labels(
 )
 
 survey1["text"] = survey1.Q65
+df = survey1[["Q82", "text"]].rename(columns={"Q82": "email"}).set_index("email")
 
-texts = list(survey1.text)
-texts_cleaned = [
-    process_text.process_text_nltk(
+# %%
+df["clean_text"] = [
+    process_text.process_text(
         text=text,
         lower_case=True,
         remove_punct=True,
         remove_stopwords=True,
         lemma=False,
     )
-    for text in texts
+    for text in df.text
 ]
 
-corpus = ""
-for text in texts_cleaned:
-    corpus = corpus + text
+df["clean_text"] = df.clean_text.str.replace("heard", "")
+df["clean_text"] = df.clean_text.str.replace("one", "")
+df["clean_text"] = df.clean_text.str.replace("students", "")
+df["clean_text"] = df.clean_text.str.replace("student", "")
+df["clean_text"] = df.clean_text.str.replace("dev ", " ")
+df["clean_text"] = df.clean_text.str.replace("jasmine ", " ")
+df["clean_text"] = df.clean_text.str.replace("harrison ", " ")
 
-allWords = nltk.tokenize.word_tokenize(corpus)
-allWordDist = nltk.FreqDist(w.lower() for w in allWords)
-mostCommon = allWordDist.most_common(50)
-mostCommon
-# %% Average length
-token_lists = [nltk.word_tokenize(text) for text in texts]
-lengths = [len(tokens) for tokens in token_lists]
-sum(lengths) / len(lengths)
 
-text_clean = [
-    process_text.process_tokens_nltk(
-        tokens=text,
-        lower_case=True,
-        remove_punct=True,
-        remove_stopwords=False,
-        lemma=False,
-    )
-    for text in texts
-]
-token_lists = [nltk.word_tokenize(text) for text in text_clean]
-lengths = [len(tokens) for tokens in token_lists]
-sum(lengths) / len(lengths)
+matrix = process_text.vectorize_text(
+    df=df,
+    text_col="clean_text",
+    remove_stopwords=True,
+    tfidf=False,
+    lemma=False,
+    lsa=False,
+)
 
-# %% Collect Bigrams and Trigrams
-# Build the bigram and trigram models
-bigram = gensim.models.Phrases(token_lists, min_count=3, threshold=1)
-bigram_mod = gensim.models.phrases.Phraser(bigram)
-
-text_bigrams = [bigram_mod[doc] for doc in token_lists]
+df["word_count"] = df["text"].str.split().str.len()
+df.word_count.mean()
 
 # %%
-text_processed = [
-    process_text.process_tokens_nltk(
-        tokens=text,
-        lower_case=True,
-        remove_punct=True,
-        remove_stopwords=True,
-        lemma=True,
-    )
-    for text in text_bigrams
-]
+
 
 # %%
 
 # Create Dictionary
-id2word = gensim.corpora.Dictionary(text_processed)
-
-
-# Term Document Frequency
-corpus = [id2word.doc2bow(text) for text in text_processed]
+id2word = gensim.corpora.Dictionary(df["clean_text"].str.split())
+corpus = [id2word.doc2bow(text) for text in df["clean_text"].str.split()]
 
 # %%
 # Build LDA model
 lda_model = gensim.models.ldamodel.LdaModel(
     corpus=corpus,
     id2word=id2word,
-    num_topics=3,
+    num_topics=2,
     random_state=100,
     update_every=1,
     chunksize=100,
@@ -127,21 +103,44 @@ lda_model = gensim.models.ldamodel.LdaModel(
 print(lda_model.print_topics())
 doc_lda = lda_model[corpus]
 
-# %%
 # Visualize the topics
 pyLDAvis.enable_notebook()
 vis = pyLDAvis.gensim.prepare(lda_model, corpus, id2word)
 vis
 
-# %% CLUSTER
-df = survey1[["text"]]
+## With two topics, we have topic 1 = process, topic 2 = content
 
+# %% Three topics
+# Build LDA model
+id2word_3 = gensim.corpora.Dictionary(df["clean_text"].str.split())
+corpus_3 = [id2word.doc2bow(text) for text in df["clean_text"].str.split()]
+lda_model3 = gensim.models.ldamodel.LdaModel(
+    corpus=corpus,
+    id2word=id2word,
+    num_topics=3,
+    random_state=100,
+    update_every=1,
+    chunksize=100,
+    passes=10,
+    alpha="auto",
+    per_word_topics=True,
+)
+# Print the Keyword in the 10 topics
+print(lda_model3.print_topics())
+doc_lda3 = lda_model[corpus]
+
+
+pyLDAvis.enable_notebook()
+vis = pyLDAvis.gensim.prepare(lda_model3, corpus_3, id2word_3)
+vis
+# %%
+# %% CLUSTER
 
 matrix = process_text.vectorize_text(
-    df, text_col="text", remove_stopwords=True, tfidf=True
+    df, text_col="clean_text", remove_stopwords=True, tfidf=True
 )
 
-num_clusters = 3
+num_clusters = 2
 km = KMeans(n_clusters=num_clusters)
 km.fit(matrix)
 clusters = km.labels_.tolist()
